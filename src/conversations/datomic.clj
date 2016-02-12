@@ -79,3 +79,29 @@
 (d/q '[:find [(pull ?dog [:dog/name :dog/breed]) ...]
        :where [?dog :dog/favorite-treat "Cheese"]]
      (d/db conn))
+
+
+(d/pull (d/db conn) '[*] [:dog/name "Tiny"])
+
+
+(d/transact conn [[:db/retract [:dog/name "Tiny"] :dog/favorite-treat "Cheese"]])
+
+(def db-tiny-no-cheese (d/db conn))
+
+(d/pull db-tiny-no-cheese '[*] [:dog/name "Tiny"])
+
+(d/q '[:find ?e ?a ?v ?tx ?op
+       :in $
+       :where [?e :dog/name "Tiny"]
+       [?e ?a ?v ?tx ?op]]
+     (d/history db-tiny-no-cheese))
+
+(d/pull (d/as-of db-tiny-no-cheese 13194139534314) '[*] [:dog/name "Tiny"])
+(d/pull (d/as-of db-tiny-no-cheese 13194139534323) '[*] [:dog/name "Tiny"])
+
+(d/pull db-tiny-no-cheese '[*] [:dog/name "Fido"])
+
+(d/transact conn [{:db/id [:dog/name "Fido"]
+                   :dog/favorite-treat "Eggs"}])
+
+(d/pull (d/db conn) '[*] [:dog/name "Fido"])
